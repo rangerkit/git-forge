@@ -143,7 +143,7 @@ function commitClosure(repo: Repo, start: string, cutAt: ReadonlySet<string>, in
     const object = repo.getObject(oid);
     if (object === undefined || object.type !== 'commit' || into.has(oid)) continue;
     into.set(oid, object);
-    const commit = parseCommit(object.data);
+    const commit = repo.commitOf(oid)!;
     addTreeClosure(repo, commit.tree, into);
     if (!cutAt.has(oid)) queue.push(...commit.parents);
   }
@@ -198,12 +198,13 @@ function selectFetchObjects(repo: Repo, wants: readonly string[], haves: readonl
       const object = repo.getObject(oid);
       if (object === undefined || object.type !== 'commit') continue;
       includedCommits.add(oid);
+      const commit = repo.commitOf(oid)!;
       if (!held.has(oid)) {
         included.set(oid, object);
-        addTreeClosure(repo, parseCommit(object.data).tree, included);
+        addTreeClosure(repo, commit.tree, included);
       }
       if (depth === null || generation < depth) {
-        for (const parent of parseCommit(object.data).parents) {
+        for (const parent of commit.parents) {
           if (!generations.has(parent)) {
             generations.set(parent, generation + 1);
             next.push(parent);

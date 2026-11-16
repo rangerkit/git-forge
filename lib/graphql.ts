@@ -92,14 +92,17 @@ function tokenize(source: string): string[] {
       index = cursor + 1;
       continue;
     }
-    if ('!$():=@[]{}|'.includes(char)) {
+    if (char === '.') {
       if (source.startsWith('...', index)) {
         tokens.push('...');
         index += 3;
-      } else {
-        tokens.push(char);
-        index += 1;
+        continue;
       }
+      throw new Error('unexpected character "."');
+    }
+    if ('!$():=@[]{}|'.includes(char)) {
+      tokens.push(char);
+      index += 1;
       continue;
     }
     const nameMatch = /^[_A-Za-z][_0-9A-Za-z]*/.exec(source.slice(index));

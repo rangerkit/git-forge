@@ -79,6 +79,8 @@ export class Repo {
   defaultBranch: string;
 
   readonly objects = new Map<string, GitObject>();
+  /** Parsed commits by id; objects are immutable once stored, so the parse is stable. */
+  private readonly commitCache = new Map<string, CommitInfo>();
   /** Full ref names ("refs/heads/main") to object ids. HEAD is the default branch, virtually. */
   readonly refs = new Map<string, string>();
 
@@ -115,9 +117,13 @@ export class Repo {
   }
 
   commitOf(oid: string): CommitInfo | null {
+    const cached = this.commitCache.get(oid);
+    if (cached !== undefined) return cached;
     const object = this.objects.get(oid);
     if (object === undefined || object.type !== 'commit') return null;
-    return parseCommit(object.data);
+    const parsed = parseCommit(object.data);
+    this.commitCache.set(oid, parsed);
+    return parsed;
   }
 
   /** Resolve any object id to the commit it points at (through annotated tags), or null. */
